@@ -31,7 +31,6 @@ try:
     
     if render_creds:
         # Use credentials from environment variable
-        import json
         cred_dict = json.loads(render_creds)
         cred = credentials.Certificate(cred_dict)
         firebase_app = firebase_admin.initialize_app(cred, {
@@ -58,6 +57,12 @@ try:
 except ImportError:
     FIREBASE_ENABLED = False
     print("Firebase: firebase-admin not installed. Using mock database.")
+except json.JSONDecodeError as e:
+    FIREBASE_ENABLED = False
+    print(f"Firebase: Invalid JSON in RENDER_FIREBASE_CREDENTIALS. Using mock database. Error: {e}")
+except ValueError as e:
+    FIREBASE_ENABLED = False
+    print(f"Firebase: Invalid credentials. Using mock database. Error: {e}")
 except Exception as e:
     FIREBASE_ENABLED = False
     print(f"Firebase: Initialization failed. Using mock database. Error: {e}")
