@@ -130,8 +130,14 @@ def update_user_data(user_id, data):
 def get_destinations_data():
     """Get destinations from Firebase or mock database"""
     if FIREBASE_ENABLED and FirebaseDB:
-        result = FirebaseDB.get_destinations()
-        return result if result else {}
+        try:
+            result = FirebaseDB.get_destinations()
+            return result if result else {}
+        except Exception as e:
+            # Firebase error, fall back to mock data
+            import logging
+            logging.error(f'Firebase get_destinations failed: {e}')
+            return destinations
     return destinations
 
 def get_destination_data(dest_id):
@@ -163,8 +169,14 @@ def delete_destination_data(dest_id):
 def get_packages_data():
     """Get packages from Firebase or mock database"""
     if FIREBASE_ENABLED and FirebaseDB:
-        result = FirebaseDB.get_packages()
-        return result if result else {}
+        try:
+            result = FirebaseDB.get_packages()
+            return result if result else {}
+        except Exception as e:
+            # Firebase error, fall back to mock data
+            import logging
+            logging.error(f'Firebase get_packages failed: {e}')
+            return packages
     return packages
 
 def get_package_data(pkg_id):
@@ -229,8 +241,14 @@ def get_bookings_by_user_email(email):
 def get_reviews_data():
     """Get reviews from Firebase or mock database"""
     if FIREBASE_ENABLED and FirebaseDB:
-        result = FirebaseDB.get_reviews()
-        return result if result else {}
+        try:
+            result = FirebaseDB.get_reviews()
+            return result if result else {}
+        except Exception as e:
+            # Firebase error, fall back to mock data
+            import logging
+            logging.error(f'Firebase get_reviews failed: {e}')
+            return reviews
     return reviews
 
 def get_review_data(review_id):
@@ -255,8 +273,14 @@ def approve_review_data(review_id):
 def get_notifications_data():
     """Get notifications from Firebase or mock database"""
     if FIREBASE_ENABLED and FirebaseDB:
-        result = FirebaseDB.get_notifications()
-        return list(result.values()) if result else []
+        try:
+            result = FirebaseDB.get_notifications()
+            return list(result.values()) if result else []
+        except Exception as e:
+            # Firebase error, fall back to mock data
+            import logging
+            logging.error(f'Firebase get_notifications failed: {e}')
+            return notifications
     return notifications
 
 def save_notification(notification_data):
