@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ package.name }} - TravelMate AI{% endblock %}
+
+{% block content %}
+<section class="page-hero text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Book {{ package.name }}</h1>
+                <p class="lead mb-0">Confirm your trip details and lock in your spot in minutes.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-lg-end mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-white">Home</a></li>
+                        <li class="breadcrumb-item"><a href="{{ url_for('packages_page') }}" class="text-white">Packages</a></li>
+                        <li class="breadcrumb-item active text-white-50" aria-current="page">Booking</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section booking-page">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-7">
+                <div class="booking-form-container">
+                    <h2 class="mb-4">Complete Your Booking</h2>
+                    <p class="text-muted mb-4">Fill in your details to book this amazing trip.</p>
+
+                    <form action="{{ url_for('booking', pkg_id=package.id) }}" method="POST">
+                        <div class="form-section mb-4">
+                            <h5 class="booking-section-title">
+                                <i class="fas fa-user me-2"></i>Personal Information
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control form-control-lg" name="name" required
+                                           value="{{ session.user_name if session.user_name else '' }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control form-control-lg" name="email" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control form-control-lg" name="phone" required
+                                           placeholder="+91 XXXXX XXXXX">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section mb-4">
+                            <h5 class="booking-section-title">
+                                <i class="fas fa-plane me-2"></i>Travel Details
+                            </h5>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Travel Date *</label>
+                                    <input type="date" class="form-control form-control-lg" name="travel_date" required
+                                           min="{{ today_date }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Number of Travelers *</label>
+                                    <select class="form-select form-select-lg" name="num_people" required id="numPeople">
+                                        <option value="1">1 Person</option>
+                                        <option value="2" selected>2 People</option>
+                                        <option value="3">3 People</option>
+                                        <option value="4">4 People</option>
+                                        <option value="5">5 People</option>
+                                        <option value="6">6+ People</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-section mb-4">
+                            <h5 class="booking-section-title">
+                                <i class="fas fa-comment me-2"></i>Special Requests
+                            </h5>
+                            <textarea class="form-control" name="special_requests" rows="4"
+                                      placeholder="Any special requirements? (dietary restrictions, room preferences, etc.)"></textarea>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                            <label class="form-check-label" for="termsCheck">
+                                I agree to the <a href="#" class="text-primary">Terms & Conditions</a> and
+                                <a href="#" class="text-primary">Cancellation Policy</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                            <i class="fas fa-check-circle me-2"></i>Confirm Booking
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="booking-summary-card">
+                    <h5 class="mb-4">Booking Summary</h5>
+
+                    <img src="{{ package.image }}" alt="{{ package.name }}" class="img-fluid rounded mb-4 booking-summary-img">
+
+                    <h4>{{ package.name }}</h4>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-clock me-2"></i>{{ package.duration }}
+                    </p>
+
+                    <div class="highlights mb-4">
+                        <h6>Package Highlights:</h6>
+                        <ul class="list-unstyled">
+                            {% for highlight in package.highlights[:3] %}
+                                <li><i class="fas fa-check text-success me-2"></i>{{ highlight }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <div class="inclusions mb-4">
+                        <h6>Inclusions:</h6>
+                        <ul class="list-unstyled">
+                            {% for inclusion in package.inclusions[:3] %}
+                                <li><i class="fas fa-plus-circle text-primary me-2"></i>{{ inclusion }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+
+                    <hr>
+
+                    <div class="price-breakdown">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Base Price</span>
+                            <span>&#8377;{{ package.price }} x <span id="travelerCount">2</span></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Taxes & Fees</span>
+                            <span>Included</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Total Amount</h5>
+                            <h3 class="text-primary mb-0">&#8377;<span id="totalPrice">{{ package.price * 2 }}</span></h3>
+                        </div>
+                        <p class="text-success small mt-2">
+                            <i class="fas fa-tag me-1"></i>
+                            You save &#8377;{{ (package.original_price - package.price) * 2 }} on this booking!
+                        </p>
+                    </div>
+
+                    <div class="trust-badges mt-4">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <i class="fas fa-shield-alt text-primary fa-2x mb-2"></i>
+                                <p class="small mb-0">Secure Booking</p>
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-headset text-primary fa-2x mb-2"></i>
+                                <p class="small mb-0">24/7 Support</p>
+                            </div>
+                            <div class="col-4">
+                                <i class="fas fa-undo text-primary fa-2x mb-2"></i>
+                                <p class="small mb-0">Easy Cancellation</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const numPeopleSelect = document.getElementById('numPeople');
+    const travelerCountSpan = document.getElementById('travelerCount');
+    const totalPriceSpan = document.getElementById('totalPrice');
+    const basePrice = {{ package.price }};
+
+    numPeopleSelect.addEventListener('change', function() {
+        const count = parseInt(this.value);
+        travelerCountSpan.textContent = count;
+        totalPriceSpan.textContent = (basePrice * count).toLocaleString('en-IN');
+    });
+});
+</script>
+{% endblock %}
+

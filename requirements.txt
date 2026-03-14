@@ -1,0 +1,20 @@
+# TravelMate AI - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core Web Framework
+Flask>=2.3.0
+
+# Firebase Integration
+firebase-admin>=6.2.0
+
+# Image Upload (Cloudinary)
+cloudinary>=1.36.0
+
+# HTTP Requests (for OneSignal API)
+requests>=2.31.0
+
+# Optional: For production server
+gunicorn>=21.2.0
+
+# Optional: For environment variables
+python-dotenv>=1.0.0

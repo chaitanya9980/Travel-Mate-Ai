@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ package.name }} - TravelMate AI{% endblock %}
+
+{% block content %}
+<!-- Package Hero -->
+<section class="position-relative">
+    <img src="{{ package.image }}" class="w-100" style="height: 500px; object-fit: cover;" alt="{{ package.name }}">
+    <div class="position-absolute top-0 start-0 end-0 bottom-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0.3), rgba(0,0,0,0.7));"></div>
+    <div class="position-absolute bottom-0 start-0 end-0 p-4">
+        <div class="container">
+            <div class="row align-items-end">
+                <div class="col-lg-8">
+                    <span class="badge bg-success mb-2">{{ destination.name }}</span>
+                    <h1 class="text-white display-5 fw-bold">{{ package.name }}</h1>
+                    <div class="d-flex align-items-center text-white flex-wrap gap-3">
+                        <span><i class="far fa-clock"></i> {{ package.duration }}</span>
+                        <span class="star-rating">
+                            {% for i in range(5) %}
+                                {% if i < package.rating|int %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                            <span class="ms-1">({{ package.reviews_count }} reviews)</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                    <div class="bg-white rounded p-3 d-inline-block text-dark">
+                        <div class="text-muted text-decoration-line-through">₹{{ package.original_price }}</div>
+                        <div class="display-6 fw-bold text-primary">₹{{ package.price }}</div>
+                        <div class="text-muted small">per person</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Package Details -->
+<section class="section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Package Overview -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Package Overview</h4>
+                        <p class="card-text">Experience the best of {{ destination.name }} with our carefully curated {{ package.name }}. This {{ package.duration }} package includes everything you need for an unforgettable journey.</p>
+
+                        <h5 class="mt-4 mb-3">Highlights</h5>
+                        <div class="row">
+                            {% for highlight in package.highlights %}
+                            <div class="col-md-6 mb-2">
+                                <i class="fas fa-star text-warning me-2"></i>{{ highlight }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inclusions -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">What's Included</h4>
+                        <div class="row">
+                            {% for inclusion in package.inclusions %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-success bg-opacity-10 p-2 rounded">
+                                            <i class="fas fa-check text-success"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        {{ inclusion }}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Itinerary -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Itinerary</h4>
+                        <div class="timeline">
+                            <div class="timeline-item mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">1</div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Day 1: Arrival</h5>
+                                        <p class="text-muted">Arrive at {{ destination.name }}. Transfer to hotel. Welcome dinner and orientation.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">2</div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Day 2: Exploration</h5>
+                                        <p class="text-muted">Full day sightseeing tour covering major attractions with expert guide.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">3</div>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <h5>Day 3: Adventure & Departure</h5>
+                                        <p class="text-muted">Adventure activities and local experiences. Departure with beautiful memories.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reviews -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="card-title mb-0">Reviews</h4>
+                            <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#reviewModal">
+                                <i class="fas fa-pen"></i> Write a Review
+                            </button>
+                        </div>
+
+                        {% if reviews %}
+                            {% for review in reviews %}
+                            <div class="review-card mb-3">
+                                <div class="review-header">
+                                    <div class="review-avatar">{{ review.user_name[0] }}</div>
+                                    <div class="review-meta">
+                                        <div class="review-name">{{ review.user_name }}</div>
+                                        <div class="review-date">{{ review.date }}</div>
+                                    </div>
+                                </div>
+                                <div class="review-rating mb-2">
+                                    {% for i in range(5) %}
+                                        {% if i < review.rating %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <p class="review-text">{{ review.comment }}</p>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted text-center py-4">No reviews yet. Be the first to review!</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Booking Card -->
+                <div class="card sticky-top" style="top: 100px; z-index: 100;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">Book This Package</h5>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted">Price per person</span>
+                            <span class="h4 mb-0 text-primary">₹{{ package.price }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="text-muted text-decoration-line-through">Original Price</span>
+                            <span class="text-muted text-decoration-line-through">₹{{ package.original_price }}</span>
+                        </div>
+                        <div class="alert alert-success">
+                            <i class="fas fa-tag"></i> You save ₹{{ package.original_price - package.price }}
+                        </div>
+                        <hr>
+                        <div class="mb-3">
+                            <label class="form-label">Select Date</label>
+                            <input type="date" class="form-control" id="travelDate">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of People</label>
+                            <select class="form-select" id="numPeople" onchange="updateTotal()">
+                                {% for i in range(1, 11) %}
+                                    <option value="{{ i }}">{{ i }} Person{{ 's' if i > 1 }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="fw-bold">Total</span>
+                            <span class="h4 mb-0 text-primary" id="totalPrice">₹{{ package.price }}</span>
+                        </div>
+                        <a href="{{ url_for('booking', pkg_id=package.id) }}" class="btn btn-primary w-100 btn-lg">
+                            <i class="fas fa-calendar-check"></i> Book Now
+                        </a>
+                        <div class="text-center mt-3">
+                            <small class="text-muted">Free cancellation up to 48 hours before</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Write a Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('submit_review') }}">
+                <div class="modal-body">
+                    <input type="hidden" name="package_id" value="{{ package.id }}">
+                    <div class="mb-3">
+                        <label class="form-label">Your Name</label>
+                        <input type="text" name="user_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rating</label>
+                        <select name="rating" class="form-select" required>
+                            <option value="5">⭐⭐⭐⭐⭐ (Excellent)</option>
+                            <option value="4">⭐⭐⭐⭐ (Very Good)</option>
+                            <option value="3">⭐⭐⭐ (Good)</option>
+                            <option value="2">⭐⭐ (Fair)</option>
+                            <option value="1">⭐ (Poor)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Your Review</label>
+                        <textarea name="comment" class="form-control" rows="4" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateTotal() {
+    const price = {{ package.price }};
+    const numPeople = document.getElementById('numPeople').value;
+    const total = price * numPeople;
+    document.getElementById('totalPrice').textContent = '₹' + total.toLocaleString();
+}
+</script>
+{% endblock %}
