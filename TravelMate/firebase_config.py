@@ -26,20 +26,35 @@ try:
     import firebase_admin
     from firebase_admin import credentials, db
     
-    # Check if service account key exists
-    service_account_path = os.path.join(os.path.dirname(__file__), 'serviceAccountKey.json')
+    # Check for credentials in environment variable (for production/Render)
+    render_creds = os.environ.get('RENDER_FIREBASE_CREDENTIALS')
     
-    if os.path.exists(service_account_path):
-        cred = credentials.Certificate(service_account_path)
+    if render_creds:
+        # Use credentials from environment variable
+        import json
+        cred_dict = json.loads(render_creds)
+        cred = credentials.Certificate(cred_dict)
         firebase_app = firebase_admin.initialize_app(cred, {
             'databaseURL': FIREBASE_CONFIG['databaseURL']
         })
         db_ref = db
         FIREBASE_ENABLED = True
-        print("Firebase: Connected successfully! Using Firebase Realtime Database.")
+        print("Firebase: Connected successfully! Using credentials from environment variable.")
     else:
-        FIREBASE_ENABLED = False
-        print("Firebase: serviceAccountKey.json not found. Using mock database.")
+        # Check if service account key file exists (for local development)
+        service_account_path = os.path.join(os.path.dirname(__file__), 'serviceAccountKey.json')
+        
+        if os.path.exists(service_account_path):
+            cred = credentials.Certificate(service_account_path)
+            firebase_app = firebase_admin.initialize_app(cred, {
+                'databaseURL': FIREBASE_CONFIG['databaseURL']
+            })
+            db_ref = db
+            FIREBASE_ENABLED = True
+            print("Firebase: Connected successfully! Using Firebase Realtime Database.")
+        else:
+            FIREBASE_ENABLED = False
+            print("Firebase: serviceAccountKey.json not found. Using mock database.")
 except ImportError:
     FIREBASE_ENABLED = False
     print("Firebase: firebase-admin not installed. Using mock database.")
