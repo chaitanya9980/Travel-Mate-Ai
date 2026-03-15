@@ -1,0 +1,566 @@
+{% extends "admin/base.html" %}
+{% set active_page = 'destinations' %}
+
+{% block title %}Manage Destinations - TravelMate AI Admin{% endblock %}
+{% block page_title %}Destinations{% endblock %}
+
+{% block topbar_actions %}
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDestinationModal">
+        <i class="fas fa-plus me-1"></i>Add Destination
+    </button>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .destination-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.2rem;
+    }
+    .destination-card {
+        background: var(--admin-surface);
+        border-radius: var(--admin-radius);
+        overflow: hidden;
+        box-shadow: var(--admin-shadow-sm);
+        transition: var(--admin-transition);
+        position: relative;
+    }
+    .destination-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--admin-shadow-md);
+    }
+    .destination-card img {
+        width: 100%;
+        height: 160px;
+        object-fit: cover;
+    }
+    .destination-body {
+        padding: 1rem;
+    }
+    .destination-actions {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 0.4rem;
+        opacity: 0;
+        transition: var(--admin-transition);
+    }
+    .destination-card:hover .destination-actions {
+        opacity: 1;
+    }
+    .upload-area {
+        border: 2px dashed rgba(15, 23, 42, 0.2);
+        border-radius: var(--admin-radius-sm);
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: var(--admin-transition);
+    }
+    .upload-area:hover {
+        border-color: var(--admin-accent);
+        background: rgba(42, 157, 143, 0.08);
+    }
+    .image-preview {
+        max-width: 100%;
+        border-radius: var(--admin-radius-sm);
+        margin-top: 0.8rem;
+    }
+    .gallery-preview {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    .gallery-preview img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 8px;
+    }
+    .gallery-edit-grid {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+    }
+    .gallery-edit-item {
+        position: relative;
+        width: 100px;
+        height: 100px;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid #eee;
+    }
+    .gallery-edit-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .gallery-edit-item .gallery-remove-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--admin-danger);
+        color: white;
+        border: none;
+        font-size: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        z-index: 2;
+    }
+    .gallery-edit-item:hover .gallery-remove-btn {
+        opacity: 1;
+    }
+    .gallery-add-btn {
+        width: 100px;
+        height: 100px;
+        border: 2px dashed rgba(15, 23, 42, 0.2);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: var(--admin-transition);
+        background: rgba(15, 23, 42, 0.02);
+    }
+    .gallery-add-btn:hover {
+        border-color: var(--admin-accent);
+        background: rgba(42, 157, 143, 0.08);
+    }
+    .gallery-count-badge {
+        background: var(--admin-accent);
+        color: white;
+        border-radius: 20px;
+        padding: 2px 10px;
+        font-size: 12px;
+        margin-left: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="admin-toolbar">
+    <div class="admin-search">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search destinations, categories, locations" data-filter-input data-filter-target="#destinationGrid" data-filter-count="#destinationsCount">
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="admin-chip"><span id="destinationsCount">{{ destinations|length }}</span> destinations</span>
+    </div>
+</div>
+
+<div class="stat-grid mb-4">
+    <div class="stat-card reveal">
+        <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+        <div>
+            <div class="stat-value" data-count="{{ destinations|length }}">0</div>
+            <div class="stat-label">Total Destinations</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon"><i class="fas fa-eye"></i></div>
+        <div>
+            <div class="stat-value" data-count="{{ total_views|default(0) }}">0</div>
+            <div class="stat-label">Total Views</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon"><i class="fas fa-star"></i></div>
+        <div>
+            <div class="stat-value" data-count="{{ avg_rating|default(0)|round(1) }}">0</div>
+            <div class="stat-label">Avg Rating</div>
+        </div>
+    </div>
+    <div class="stat-card reveal">
+        <div class="stat-icon"><i class="fas fa-comment"></i></div>
+        <div>
+            <div class="stat-value" data-count="{{ total_reviews|default(0) }}">0</div>
+            <div class="stat-label">Total Reviews</div>
+        </div>
+    </div>
+</div>
+
+<div id="destinationGrid" class="destination-grid">
+    {% for dest_id, dest in destinations.items() %}
+        <div class="destination-card reveal" data-filter-item data-filter-text="{{ dest.name }} {{ dest.category }} {{ dest.location }}">
+            <img src="{{ dest.image }}" alt="{{ dest.name }}">
+            <div class="destination-actions">
+                <button class="icon-btn" onclick="editDestination('{{ dest_id }}')" title="Edit">
+                    <i class="fas fa-pen"></i>
+                </button>
+                <button class="icon-btn" data-copy="{{ dest.location }}" title="Copy Location">
+                    <i class="far fa-copy"></i>
+                </button>
+                <button class="icon-btn" onclick="deleteDestination('{{ dest_id }}', '{{ dest.name }}')" title="Delete">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="destination-body">
+                <h6 class="mb-1">{{ dest.name }}</h6>
+                <p class="text-muted small mb-2">{{ dest.category }}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-warning text-dark">{{ dest.rating|default(0) }} <i class="fas fa-star"></i></span>
+                    <small class="text-muted">{{ dest.reviews_count|default(0) }} reviews</small>
+                </div>
+                <div class="mt-2 text-muted small"><i class="fas fa-eye me-1"></i>{{ dest.views|default(0) }} views</div>
+                <div class="mt-2 text-muted small"><i class="fas fa-map-marker-alt me-1"></i>{{ dest.location|default('') }}</div>
+            </div>
+        </div>
+    {% endfor %}
+    <div data-filter-empty class="admin-card text-center" style="{% if destinations %}display:none{% endif %}">
+        <i class="fas fa-compass fa-3x text-muted mb-3"></i>
+        <h5>No destinations match your search</h5>
+    </div>
+</div>
+
+<!-- Add Destination Modal -->
+<div class="modal fade" id="addDestinationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Destination</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin_destinations') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Destination Name</label>
+                                <input type="text" class="form-control" name="name" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="category" required id="addCategorySelect">
+                                    {% for cat_id, cat in categories.items() %}
+                                        {% if cat.active %}
+                                            <option value="{{ cat.name }}">{{ cat.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted"><a href="{{ url_for('admin_categories') }}" target="_blank">Manage Categories</a></small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Short Description</label>
+                                <textarea class="form-control" name="description" rows="3" required placeholder="Brief description for cards..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Full Description</label>
+                                <textarea class="form-control" name="full_description" rows="5" placeholder="Detailed description for explore page..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location" placeholder="City, State, Country">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Best Time to Visit</label>
+                                <input type="text" class="form-control" name="best_time" placeholder="e.g., October to March">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Popular Attractions</label>
+                                <textarea class="form-control" name="attractions" rows="2" placeholder="Comma-separated list..."></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Main Image</label>
+                                <div class="upload-area" onclick="document.getElementById('mainImage').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p class="mb-0">Click to upload or drag & drop</p>
+                                    <small class="text-muted">Supports: JPG, PNG, GIF (max 5MB)</small>
+                                </div>
+                                <input type="file" id="mainImage" name="image_file" accept="image/*" class="d-none" onchange="previewImage(this, 'mainPreview')">
+                                <img id="mainPreview" class="image-preview d-none">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Gallery Images (up to 5)</label>
+                        <div class="upload-area" onclick="document.getElementById('galleryImages').click()">
+                            <i class="fas fa-images"></i>
+                            <p class="mb-0">Click to upload gallery images</p>
+                            <small class="text-muted">Select multiple images</small>
+                        </div>
+                        <input type="file" id="galleryImages" name="gallery_files" accept="image/*" multiple class="d-none" onchange="previewGallery(this)">
+                        <div id="galleryPreview" class="gallery-preview"></div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="send_notification" id="sendNotification" checked>
+                        <label class="form-check-label" for="sendNotification">
+                            Send notification to all users about this new destination
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Destination
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Destination Modal -->
+<div class="modal fade" id="editDestinationModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Destination</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" id="editForm" enctype="multipart/form-data">
+                <input type="hidden" name="_method" value="PUT">
+                <input type="hidden" name="dest_id" id="editDestId">
+                <input type="hidden" name="images_to_delete" id="imagesToDelete" value="">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Destination Name</label>
+                                <input type="text" class="form-control" name="name" id="editName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select class="form-select" name="category" id="editCategory" required>
+                                    {% for cat_id, cat in categories.items() %}
+                                        {% if cat.active %}
+                                            <option value="{{ cat.name }}">{{ cat.name }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Short Description</label>
+                                <textarea class="form-control" name="description" id="editDescription" rows="3" required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Full Description</label>
+                                <textarea class="form-control" name="full_description" id="editFullDescription" rows="5"></textarea>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" name="location" id="editLocation">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Best Time to Visit</label>
+                                <input type="text" class="form-control" name="best_time" id="editBestTime">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Popular Attractions</label>
+                                <textarea class="form-control" name="attractions" id="editAttractions" rows="2"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Current Image</label>
+                                <img id="editCurrentImage" class="image-preview" src="" alt="Current">
+                                <label class="form-label mt-2">Upload New Image (optional)</label>
+                                <div class="upload-area" onclick="document.getElementById('editImageFile').click()">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <p class="mb-0">Click to upload new image</p>
+                                </div>
+                                <input type="file" id="editImageFile" name="image_file" accept="image/*" class="d-none" onchange="previewImage(this, 'editNewPreview')">
+                                <img id="editNewPreview" class="image-preview d-none">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Gallery Images <span id="galleryCountBadge" class="gallery-count-badge">0</span></label>
+                                <div id="editGalleryGrid" class="gallery-edit-grid"></div>
+                                <input type="file" id="editGalleryFiles" name="gallery_files" accept="image/*" multiple class="d-none" onchange="handleEditGalleryUpload(this)">
+                                <small class="text-muted d-block mt-2">Click + to add up to 5 gallery images</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteDestName"></strong>?</p>
+                <p class="text-danger"><i class="fas fa-exclamation-triangle"></i> This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" id="deleteForm" style="display: inline;">
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const destinations = {{ destinations|tojson }};
+    let editGalleryImages = [];
+    let newGalleryFiles = [];
+
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function previewGallery(input) {
+        const preview = document.getElementById('galleryPreview');
+        preview.innerHTML = '';
+        if (input.files) {
+            Array.from(input.files).slice(0, 5).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    preview.appendChild(img);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+    }
+
+    function renderEditGallery() {
+        const grid = document.getElementById('editGalleryGrid');
+        const badge = document.getElementById('galleryCountBadge');
+        grid.innerHTML = '';
+
+        editGalleryImages.forEach((imgUrl, index) => {
+            const item = document.createElement('div');
+            item.className = 'gallery-edit-item';
+            item.innerHTML = `
+                <img src="${imgUrl}" alt="Gallery ${index + 1}">
+                <button type="button" class="gallery-remove-btn" onclick="removeGalleryImage(${index})">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            grid.appendChild(item);
+        });
+
+        if (editGalleryImages.length < 5) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'gallery-add-btn';
+            addBtn.onclick = function() { document.getElementById('editGalleryFiles').click(); };
+            addBtn.innerHTML = `
+                <i class="fas fa-plus"></i>
+                <small>Add</small>
+            `;
+            grid.appendChild(addBtn);
+        }
+
+        badge.textContent = editGalleryImages.length;
+    }
+
+    function handleEditGalleryUpload(input) {
+        if (input.files) {
+            const files = Array.from(input.files);
+            const remainingSlots = 5 - editGalleryImages.length;
+            const filesToAdd = files.slice(0, remainingSlots);
+
+            filesToAdd.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    file.previewUrl = e.target.result;
+                    newGalleryFiles.push(file);
+                    editGalleryImages.push(e.target.result);
+                    renderEditGallery();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            if (files.length > remainingSlots) {
+                alert(`You can only add up to ${remainingSlots} more image(s).`);
+            }
+        }
+        input.value = '';
+    }
+
+    function removeGalleryImage(index) {
+        const imgUrl = editGalleryImages[index];
+        if (imgUrl && !imgUrl.startsWith('data:') && !imgUrl.startsWith('blob:')) {
+            if (!window.imagesToDelete) window.imagesToDelete = [];
+            window.imagesToDelete.push(imgUrl);
+        } else {
+            newGalleryFiles = newGalleryFiles.filter(f => f.previewUrl !== imgUrl);
+        }
+        editGalleryImages.splice(index, 1);
+        renderEditGallery();
+    }
+
+    function editDestination(destId) {
+        const dest = destinations[destId];
+        if (!dest) return;
+
+        document.getElementById('editDestId').value = destId;
+        document.getElementById('editName').value = dest.name || '';
+        document.getElementById('editCategory').value = dest.category || 'Beaches';
+        document.getElementById('editDescription').value = dest.description || '';
+        document.getElementById('editFullDescription').value = dest.full_description || '';
+        document.getElementById('editLocation').value = dest.location || '';
+        document.getElementById('editBestTime').value = dest.best_time || '';
+        document.getElementById('editAttractions').value = dest.attractions || '';
+        document.getElementById('editCurrentImage').src = dest.image || '';
+        document.getElementById('editNewPreview').classList.add('d-none');
+
+        editGalleryImages = [...(dest.gallery || [])];
+        newGalleryFiles = [];
+        window.imagesToDelete = [];
+        renderEditGallery();
+
+        document.getElementById('editForm').action = '/admin/destination/edit/' + destId;
+
+        const form = document.getElementById('editForm');
+        form.onsubmit = function() {
+            if (window.imagesToDelete && window.imagesToDelete.length > 0) {
+                document.getElementById('imagesToDelete').value = JSON.stringify(window.imagesToDelete);
+            } else {
+                document.getElementById('imagesToDelete').value = '';
+            }
+            return true;
+        };
+
+        const modal = new bootstrap.Modal(document.getElementById('editDestinationModal'));
+        modal.show();
+    }
+
+    function deleteDestination(destId, destName) {
+        document.getElementById('deleteDestName').textContent = destName;
+        document.getElementById('deleteForm').action = '/admin/destination/delete/' + destId;
+        const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        modal.show();
+    }
+</script>
+{% endblock %}

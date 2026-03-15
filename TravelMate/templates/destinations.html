@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Destinations - TravelMate AI{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-hero bg-gradient-primary text-white py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold mb-3">Explore Destinations</h1>
+                <p class="lead mb-0">Discover amazing places and plan your perfect getaway</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <nav aria-label="breadcrumb">
+                    <ol class="breadcrumb justify-content-lg-end mb-0">
+                        <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-white">Home</a></li>
+                        <li class="breadcrumb-item active text-white-50" aria-current="page">Destinations</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Filter Section -->
+<section class="py-4 bg-light filter-bar">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <h5 class="mb-0"><i class="fas fa-filter text-primary"></i> Filter by Category</h5>
+            </div>
+            <div class="col-md-6 mt-3 mt-md-0">
+                <div class="d-flex flex-wrap gap-2 justify-content-md-end">
+                    <a href="{{ url_for('destinations_page') }}" class="btn btn-sm {{ 'btn-primary' if current_category == 'all' else 'btn-outline-primary' }}">All</a>
+                    {% for cat_id, cat in categories.items() %}
+                        {% if cat.active %}
+                            <a href="{{ url_for('destinations_page', category=cat.name) }}" class="btn btn-sm {{ 'btn-primary' if current_category == cat.name else 'btn-outline-primary' }}">{{ cat.name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Destinations Grid -->
+<section class="section">
+    <div class="container">
+        {% if destinations %}
+            <div class="row g-4">
+                {% for destination in destinations %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card destination-card h-100">
+                        <img src="{{ destination.image }}" class="card-img-top" alt="{{ destination.name }}">
+                        <div class="overlay">
+                            <span class="category-badge">{{ destination.category }}</span>
+                            <h4 class="mt-2">{{ destination.name }}</h4>
+                            <p class="mb-2">{{ destination.description[:80] }}...</p>
+                            <div class="d-flex align-items-center">
+                                <span class="star-rating me-2">
+                                    {% for i in range(5) %}
+                                        {% if i < destination.rating|int %}
+                                            <i class="fas fa-star"></i>
+                                        {% else %}
+                                            <i class="far fa-star"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </span>
+                                <small>({{ destination.reviews_count }} reviews)</small>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('explore', dest_id=destination.id) }}" class="stretched-link"></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4>No destinations found</h4>
+                <p class="text-muted">Try selecting a different category</p>
+                <a href="{{ url_for('destinations_page') }}" class="btn btn-primary">View All Destinations</a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="section bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="p-4">
+                    <i class="fas fa-map-marker-alt fa-3x text-primary mb-3"></i>
+                    <h3 class="fw-bold">50+</h3>
+                    <p class="text-muted mb-0">Destinations</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="p-4">
+                    <i class="fas fa-suitcase fa-3x text-success mb-3"></i>
+                    <h3 class="fw-bold">200+</h3>
+                    <p class="text-muted mb-0">Tour Packages</p>
+                </div>
+            </div>
+            <div class="col-md-3 mb-4 mb-md-0">
+                <div class="p-4">
+                    <i class="fas fa-users fa-3x text-warning mb-3"></i>
+                    <h3 class="fw-bold">10K+</h3>
+                    <p class="text-muted mb-0">Happy Travelers</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="p-4">
+                    <i class="fas fa-star fa-3x text-danger mb-3"></i>
+                    <h3 class="fw-bold">4.8</h3>
+                    <p class="text-muted mb-0">Average Rating</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}My Bookings - TravelMate AI{% endblock %}
+
+{% block content %}
+<section class="user-panel-hero text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="hero-eyebrow">Travel Dashboard</span>
+                <h1 class="display-5 fw-bold mb-2">My Bookings</h1>
+                <p class="lead mb-0">Track upcoming trips, share itineraries, and manage your reservations.</p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <div class="hero-actions">
+                    <a href="{{ url_for('packages_page') }}" class="btn btn-outline-light">
+                        <i class="fas fa-suitcase me-2"></i>Explore Packages
+                    </a>
+                    <a href="{{ url_for('favorites') }}" class="btn btn-light">
+                        <i class="fas fa-heart me-2"></i>Favorites
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="user-panel">
+    <div class="container">
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-3">
+                <div class="profile-sidebar animate-on-scroll">
+                    <div class="profile-avatar">
+                        <span>{{ session.user_name[0]|upper if session.user_name else 'U' }}</span>
+                    </div>
+                    <h4 class="text-center mt-3 mb-1">{{ session.user_name }}</h4>
+                    <p class="text-center text-muted small mb-2">Traveler</p>
+                    <div class="user-badge">
+                        <i class="fas fa-plane-departure"></i>
+                        Journeys in progress
+                    </div>
+                    <hr>
+                    <ul class="profile-nav">
+                        <li>
+                            <a href="{{ url_for('profile') }}"><i class="fas fa-user me-2"></i>My Profile</a>
+                        </li>
+                        <li class="active">
+                            <a href="{{ url_for('my_bookings') }}"><i class="fas fa-suitcase me-2"></i>My Bookings</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('favorites') }}"><i class="fas fa-heart me-2"></i>Favorites</a>
+                        </li>
+                        <li>
+                            <a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="user-panel-card animate-on-scroll">
+                    <div class="panel-header">
+                        <div>
+                            <h4 class="mb-1">Bookings Overview</h4>
+                            <p class="text-muted mb-0">Showing <span id="bookingCount">{{ bookings|length }}</span> booking(s)</p>
+                        </div>
+                        <div class="panel-actions">
+                            <div class="search-field">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="form-control" placeholder="Search by package, date, or ID" data-filter-input data-filter-target="#bookingList" data-filter-count="#bookingCount">
+                            </div>
+                        </div>
+                    </div>
+
+                    {% set confirmed_count = bookings | selectattr('status', 'equalto', 'Confirmed') | list | length %}
+                    {% set pending_count = bookings | selectattr('status', 'equalto', 'Pending') | list | length %}
+                    {% set cancelled_count = bookings | selectattr('status', 'equalto', 'Cancelled') | list | length %}
+                    <div class="user-stats mt-3">
+                        <div class="stat-tile">
+                            <div class="stat-label">Total</div>
+                            <div class="stat-value">{{ bookings|length }}</div>
+                            <div class="stat-meta">Bookings made</div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="stat-label">Confirmed</div>
+                            <div class="stat-value">{{ confirmed_count }}</div>
+                            <div class="stat-meta">Ready to travel</div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-value">{{ pending_count }}</div>
+                            <div class="stat-meta">Awaiting approval</div>
+                        </div>
+                        <div class="stat-tile">
+                            <div class="stat-label">Cancelled</div>
+                            <div class="stat-value">{{ cancelled_count }}</div>
+                            <div class="stat-meta">Trips on hold</div>
+                        </div>
+                    </div>
+
+                    <div class="filter-chips mt-4">
+                        <button type="button" class="btn btn-outline-primary btn-sm active" data-filter-status data-filter-target="#bookingList" data-status="all">
+                            All
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-filter-status data-filter-target="#bookingList" data-status="Confirmed">
+                            Confirmed
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-filter-status data-filter-target="#bookingList" data-status="Pending">
+                            Pending
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-filter-status data-filter-target="#bookingList" data-status="Cancelled">
+                            Cancelled
+                        </button>
+                    </div>
+                </div>
+
+                {% if bookings %}
+                    <div class="bookings-list mt-4" id="bookingList" data-active-status="all">
+                        {% for booking in bookings %}
+                            {% set package = packages.get(booking.package_id) %}
+                            {% set status_class = 'status-pending' %}
+                            {% if booking.status == 'Confirmed' %}
+                                {% set status_class = 'status-confirmed' %}
+                            {% elif booking.status == 'Cancelled' %}
+                                {% set status_class = 'status-cancelled' %}
+                            {% endif %}
+                            <div class="booking-card animate-on-scroll" data-filter-item data-status="{{ booking.status }}" data-filter-text="{{ booking.id }} {{ booking.status }} {{ booking.travel_date }} {{ package.name if package else '' }}">
+                                <div class="booking-card-main">
+                                    <div class="booking-media">
+                                        {% if package %}
+                                            <img src="{{ package.image }}" alt="{{ package.name }}" class="booking-img">
+                                        {% else %}
+                                            <div class="booking-img-placeholder">
+                                                <i class="fas fa-suitcase"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="booking-info">
+                                        <div class="booking-title">
+                                            <h5 class="mb-1">{{ package.name if package else 'Package' }}</h5>
+                                            <span class="status-pill {{ status_class }}">{{ booking.status }}</span>
+                                        </div>
+                                        <div class="booking-meta">
+                                            <span><i class="fas fa-calendar me-1"></i>{{ booking.travel_date }}</span>
+                                            <span><i class="fas fa-users me-1"></i>{{ booking.num_people }} traveler(s)</span>
+                                            <span><i class="fas fa-receipt me-1"></i>{{ booking.id }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="booking-pricing">
+                                        <div class="booking-price">&#8377;{{ booking.total_price }}</div>
+                                        <span class="text-muted small">Total price</span>
+                                    </div>
+                                </div>
+                                <div class="booking-actions">
+                                    <button class="btn btn-light btn-sm" data-copy="{{ booking.id }}" data-copy-message="Booking ID copied">
+                                        <i class="fas fa-copy me-1"></i>Copy ID
+                                    </button>
+                                    <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" class="btn btn-outline-primary btn-sm">
+                                        View Details
+                                    </a>
+                                    <a href="{{ url_for('trip_share', booking_id=booking.id) }}" class="btn btn-primary btn-sm" target="_blank">
+                                        <i class="fas fa-share-alt me-1"></i>Share
+                                    </a>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="empty-state" data-filter-empty style="display: none;">
+                            <i class="fas fa-filter"></i>
+                            <h5>No bookings match your filters</h5>
+                            <p class="text-muted">Try a different search term or status.</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="user-panel-card mt-4 text-center py-5 animate-on-scroll">
+                        <i class="fas fa-suitcase-rolling fa-3x text-muted mb-3"></i>
+                        <h4>No Bookings Yet</h4>
+                        <p class="text-muted">Start your adventure by booking a package!</p>
+                        <a href="{{ url_for('packages_page') }}" class="btn btn-primary mt-3">
+                            <i class="fas fa-suitcase me-2"></i>Explore Packages
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "admin/base.html" %}
+{% set active_page = 'bookings' %}
+
+{% block title %}Manage Bookings - TravelMate AI Admin{% endblock %}
+{% block page_title %}Bookings{% endblock %}
+
+{% block content %}
+<div class="admin-toolbar">
+    <div class="admin-search">
+        <i class="fas fa-search"></i>
+        <input type="text" placeholder="Search by booking ID, traveler, email" data-filter-input data-filter-target="#bookingsContainer" data-filter-count="#bookingsCount">
+    </div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <span class="admin-chip"><span id="bookingsCount">{{ bookings|length }}</span> bookings</span>
+        <button class="btn btn-outline-primary" data-export-table="bookingsTable" data-export-filename="bookings.csv">
+            <i class="fas fa-file-export me-1"></i>Export
+        </button>
+    </div>
+</div>
+
+<div class="admin-card reveal">
+    <div class="admin-card-header">
+        <h4><i class="fas fa-calendar-check me-2"></i>Manage Bookings</h4>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{{ url_for('admin_bookings') }}" class="btn btn-outline-primary btn-sm {% if not request.args.get('status') %}active{% endif %}">All</a>
+            <a href="{{ url_for('admin_bookings', status='Pending') }}" class="btn btn-outline-primary btn-sm {% if request.args.get('status') == 'Pending' %}active{% endif %}">Pending</a>
+            <a href="{{ url_for('admin_bookings', status='Confirmed') }}" class="btn btn-outline-primary btn-sm {% if request.args.get('status') == 'Confirmed' %}active{% endif %}">Confirmed</a>
+            <a href="{{ url_for('admin_bookings', status='Cancelled') }}" class="btn btn-outline-primary btn-sm {% if request.args.get('status') == 'Cancelled' %}active{% endif %}">Cancelled</a>
+        </div>
+    </div>
+
+    <div id="bookingsContainer">
+        {% if bookings %}
+            <div class="table-responsive">
+                <table class="table align-middle" id="bookingsTable">
+                <thead>
+                    <tr>
+                        <th>Booking ID</th>
+                        <th>Customer</th>
+                        <th>Package</th>
+                        <th>Travel Date</th>
+                        <th>Travelers</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr data-filter-item data-filter-text="{{ booking.id }} {{ booking.name }} {{ booking.email }} {{ booking.travel_date }} {{ booking.status }}">
+                            <td>
+                                <strong>{{ booking.id }}</strong>
+                                <button class="icon-btn ms-2" data-copy="{{ booking.id }}" title="Copy ID">
+                                    <i class="far fa-copy"></i>
+                                </button>
+                            </td>
+                            <td>
+                                {{ booking.name }}<br>
+                                <small class="text-muted">{{ booking.email }}</small>
+                            </td>
+                            <td>{{ packages.get(booking.package_id, {}).get('name', 'N/A') }}</td>
+                            <td>{{ booking.travel_date }}</td>
+                            <td>{{ booking.num_people }}</td>
+                            <td>&#8377;{{ booking.total_price }}</td>
+                            <td>
+                                <span class="badge {% if booking.status == 'Pending' %}bg-warning text-dark{% elif booking.status == 'Confirmed' %}bg-success{% else %}bg-danger{% endif %}">
+                                    {{ booking.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('admin_update_booking', booking_id=booking.id) }}" method="POST" class="d-flex gap-2 flex-wrap">
+                                    <select name="status" class="form-select form-select-sm" style="width: auto;">
+                                        <option value="Pending" {% if booking.status == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="Confirmed" {% if booking.status == 'Confirmed' %}selected{% endif %}>Confirmed</option>
+                                        <option value="Cancelled" {% if booking.status == 'Cancelled' %}selected{% endif %}>Cancelled</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                </table>
+            </div>
+        {% endif %}
+        <p class="text-muted text-center py-4" data-filter-empty style="{% if bookings %}display:none{% endif %}">No bookings found</p>
+    </div>
+</div>
+{% endblock %}
